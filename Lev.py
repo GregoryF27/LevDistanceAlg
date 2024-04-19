@@ -58,11 +58,10 @@ def lev_matrix(s1,s2): # O(n*m) time complexity and auxillary complexity
                 
     return mat[l1][l2], mat        
     
+print(lev_matrix("hello","hemblopp")[1])
     
-    
-import numpy as np
 def lev_matrix_better(s1,s2): # O(n*m) time complexity; O(max(n,m)) auxillary complexity
-    """Like the one before but stores only two rows of the matrix at a time; swapped lists for numpy arrays, which would decrease runtime but not in an asymptotically significant manner"""
+    """Like the one before but stores only two rows of the matrix at a time"""
     l1,l2 = len(s1),len(s2)
     
     prev = [j for j in range(l2+1)]
@@ -79,15 +78,41 @@ def lev_matrix_better(s1,s2): # O(n*m) time complexity; O(max(n,m)) auxillary co
                                      prev[j], #removal
                                      prev[j-1] # replacement
                                 )
-                
+        print(curr)
         prev = curr.copy()
         
     return curr[l1]
+
+
+print(lev_matrix_better("hello","hemblopp"))
         
+import numpy as np
+def lev_matrix_better_numpy(s1, s2): # O(n*m) time complexity; O(max(n,m)) auxillary complexity
+    """swapped lists for numpy arrays, which would decrease runtime but not in an asymptotically significant manner"""
+    l1,l2 = len(s1),len(s2)
     
-    
-    
-    
+    prev = np.array([j for j in range(l2+1)])
+    curr = np.array([0] * (l2+1))
+    print()
+    for i in range(1,l1+1): # outer loop moves curr to prev, updates curr
+        curr[0]=i
+        
+        for j in range(1,l1+1):
+            if s1[i-1]==s2[j-1]:#char match
+                curr[j]=prev[j-1]#Same as before, use top left
+            else: #choose min cost operation
+                curr[j]=1 + min(curr[j-1],   # insertion
+                                     prev[j], #removal
+                                     prev[j-1] # replacement
+                                )
+                
+        print(curr)
+        prev = curr.copy()
+        
+    return curr[l1]
+
+# problem here
+print(lev_matrix_better_numpy("hello","hemblopp"))
 
     
     
@@ -153,7 +178,7 @@ for word in allWords:
         words[int(l/3)-1].append(word)
 
 
-print(allThem)
+#print(allThem)
 # we have words of sizes l = 3,6,...,27
 #We now want to choose 40 pairs at random, same for all trials, then find total time
 # Plot lev_naive, lev_naive_better, lev_matrix, lev_matrix_better (implement numpy first?)
@@ -164,8 +189,8 @@ for i in range(1,9):
         chosenPairs[i-1].append(choices(words))
 
 
-print(chosenPairs)
-print(words[1])
+#print(chosenPairs)
+# print(words[1])
 # print(choices(words[1]))
 
 # plt.plot(nums, bruteData,'r^', nums,binaryData,'g^')
