@@ -14,16 +14,16 @@ def lev_naive(s1,s2):# O(max(n,m)^2*3^(n+m)) given n=len(s1),m=len(s2); auxillar
     
 
 def lev_naive_better(s1,s2,l1=None,l2=None): #O(3^(n+m)) given n=len(s1), m=len(s2); auxillary complexity of O(n+m)
-    if not l1 or not l2:
+    if l1 is None or l2 is None:
         l1 = len(s1)
         l2 = len(s2)
         
-    if l1==0: return l2
-    if l2==0: return l1
+    if l1<=0: return l2
+    if l2<=0: return l1
     
     if s1[l1-1]==s2[l2-1]: return lev_naive_better(s1,s2,l1-1,l2-1)
-    
-    return 1 + min(lev_naive_better(s1,s2,l1-1,l2),   #next move is deletion (are we sure?)
+
+    return 1 + min(lev_naive_better(s1,s2,l1-1,l2),   #next move is deletion
                    lev_naive_better(s1,s2,l1-1,l2-1), # next move is substitution
                    lev_naive_better(s1,s2,l1,l2-1)    # next move is insertion
                     )
@@ -58,11 +58,17 @@ def lev_matrix(s1,s2): # O(n*m) time complexity and auxillary complexity
                 
     return mat[l1][l2], mat        
     
-print(lev_matrix("hello","hemblopp")[1])
     
-def lev_matrix_better(s1,s2): # O(n*m) time complexity; O(max(n,m)) auxillary complexity
-    """Like the one before but stores only two rows of the matrix at a time"""
+    
+def lev_matrix_better(s1,s2): # O(n*m) time complexity; O(min(n,m)) auxillary complexity
+    """Like the one before but stores only two rows of the matrix at a time; swapped lists for numpy arrays, which would decrease runtime but not in an asymptotically significant manner"""
+    if len(s1)< len(s2):
+        s1, s2 = s2,s1 # swap so s2 is the smaller string
+    
     l1,l2 = len(s1),len(s2)
+    
+    if l1==0: return l2
+    if l2==0: return l1
     
     prev = [j for j in range(l2+1)]
     curr = [0]* (l2+1)
@@ -70,34 +76,7 @@ def lev_matrix_better(s1,s2): # O(n*m) time complexity; O(max(n,m)) auxillary co
     for i in range(1,l1+1): # outer loop moves curr to prev, updates curr
         curr[0]=i
         
-        for j in range(1,l1+1):
-            if s1[i-1]==s2[j-1]:#char match
-                curr[j]=prev[j-1]#Same as before, use top left
-            else: #choose min cost operation
-                curr[j]=1 + min(curr[j-1],   # insertion
-                                     prev[j], #removal
-                                     prev[j-1] # replacement
-                                )
-        print(curr)
-        prev = curr.copy()
-        
-    return curr[l1]
-
-
-print(lev_matrix_better("hello","hemblopp"))
-        
-import numpy as np
-def lev_matrix_better_numpy(s1, s2): # O(n*m) time complexity; O(max(n,m)) auxillary complexity
-    """swapped lists for numpy arrays, which would decrease runtime but not in an asymptotically significant manner"""
-    l1,l2 = len(s1),len(s2)
-    
-    prev = np.array([j for j in range(l2+1)])
-    curr = np.array([0] * (l2+1))
-    print()
-    for i in range(1,l1+1): # outer loop moves curr to prev, updates curr
-        curr[0]=i
-        
-        for j in range(1,l1+1):
+        for j in range(1,l2+1):
             if s1[i-1]==s2[j-1]:#char match
                 curr[j]=prev[j-1]#Same as before, use top left
             else: #choose min cost operation
@@ -106,13 +85,14 @@ def lev_matrix_better_numpy(s1, s2): # O(n*m) time complexity; O(max(n,m)) auxil
                                      prev[j-1] # replacement
                                 )
                 
-        print(curr)
         prev = curr.copy()
         
-    return curr[l1]
-
-# problem here
-print(lev_matrix_better_numpy("hello","hemblopp"))
+    return curr[l2]
+        
+    
+    
+    
+    
 
     
     
@@ -143,14 +123,15 @@ import matplotlib.pyplot as plt
 
 from time import time
 
-def timeit(f, *args):
-    times = 10
-    minim = float('inf')
+def timeit(f, *args): #returns average time taken
+    times = 25
+    total = 0
     for _ in range(times):
         start = time()
         f(*args)
-        if (end := time() - start) < minim: mim = end
-    return round(minim,8)
+        end = time()
+        total += (end-start)
+    return round(total/times,8)
 
 
 
@@ -163,50 +144,70 @@ with open(r"Words.txt",'r') as f:
 
 
 from random import choice, choices
-    
-words = [[] for _ in range(1,9)]
-# 0 is len=3, 1 is len=6, ... 9 is len=27
 
 
-lens = {3*i for i in range(1,9)}
+maxim = 20
+iterations = maxim - 3
+words = [[] for _ in range(iterations+1)]#words of length 3 inclusive to maxim exclusive
 
 
-allThem = set()
 for word in allWords:
-    if l:=len(word) in lens: 
-        allThem.add(int(l/3-1))
-        words[int(l/3)-1].append(word)
+    l = len(word)
+    if l >maxim: continue
+    words[l-3].append(word)
 
 
-#print(allThem)
 # we have words of sizes l = 3,6,...,27
-#We now want to choose 40 pairs at random, same for all trials, then find total time
-# Plot lev_naive, lev_naive_better, lev_matrix, lev_matrix_better (implement numpy first?)
+#We now want to choose 20 pairs at random, same for all trials, then find total time 
+#NOTE: exclude len=27 since there are only three words here, not good enough data set
 
-chosenPairs = [[] for _ in range(1,9)]
-for i in range(1,9):
-    for _ in range(5):
-        chosenPairs[i-1].append(choices(words))
+# Plot lev_naive, lev_naive_better, lev_matrix, lev_matrix_better
+
+chosenPairs = [[] for _ in range(iterations)]
+for i in range(iterations): # 0,1, ... 7 --> 3,6, ..., 24
+    for _ in range(60):#20 pairs
+        chosenPairs[i].append(choices(words[i],k=2))
 
 
-#print(chosenPairs)
-# print(words[1])
-# print(choices(words[1]))
 
-# plt.plot(nums, bruteData,'r^', nums,binaryData,'g^')
-# plt.xlabel('Size of input')
-# plt.ylabel('Time in seconds')
-# plt.xscale('log')
-# plt.title(' Brute Force vs Binary Search Effeciency')
-# plt.show()
+# for pairs in chosenPairs: # This is just to test that we did it right :)
+#     print(pairs)
+#     print('\n\n')
+#     print(len(pairs[1][0]))
+
+#Now we have chosenPairs which is a list[i=0..8] of words, each item in chosenPairs is a list of 20 pairs of 2 words of length (3*i)+1
+
+
+
+# we are gonna do v1, v2, v3, v4 for each implementation
+v1 = [[] for _ in range(iterations)] 
+v2 = [[] for _ in range(iterations)] 
+v3 = [[] for _ in range(iterations)] 
+v4 = [[] for _ in range(iterations)] 
+
+for version in [[v1,lev_naive],[v2,lev_naive_better],[v3,lev_matrix],[v4,lev_matrix_better]]:
+    for i in range(iterations): # 0,1, ... 7 --> 3,6, ..., 24
+        avgTime = 0
+        for j in range(20):#20 pairs
+            avgTime += timeit(version[1],*chosenPairs[i][j])
+        version[0][i] = (avgTime/20)
+
+
+nums = [i+3 for i in range(iterations)]
+plt.plot(nums, v1,'b-', nums,v2,'g-',nums, v3,'r-', nums,v4,'y-')
+plt.xlabel('Size of input')
+plt.ylabel('Time in seconds')
+#plt.yscale('log')
+plt.title(' Difference in Levenshtein Implementations')
+plt.show()
  
 
 
 
-if __name__=='__main__':
+if __name__=='__main__balls':
     tup = ('catherine','chatters')
-    # print(lev_naive(*tup))
-
-    # print(lev_matrix(*tup)[0])
-    # print(matRepr(lev_matrix(*tup)[1]))
-    # print(lev_matrix_better(*tup))
+    print(lev_naive(*tup))
+    print(lev_naive_better(*tup))
+    print(lev_matrix(*tup)[0])
+   # print(matRepr(lev_matrix(*tup)[1]))
+    print(lev_matrix_better(*tup))
